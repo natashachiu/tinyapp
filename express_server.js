@@ -29,7 +29,7 @@ app.post('/urls', (req, res) => {
   res.redirect(`/u/${shortUrl}`);
 });
 
-// accept different route parameters
+// route parameters return an object
 app.get('/u/:id', (req, res) => {
   if (!urlDatabase[req.params.id]) {
     res.statusCode = 404;
@@ -44,6 +44,13 @@ app.get('/u/:id', (req, res) => {
   //   longURL: urlDatabase[req.params.id]
   // };
   // res.render('urls_show', templateVars);
+});
+
+// it is a POST method as forms only support GET & POST
+app.post('/urls/:id/delete', (req, res) => {
+  delete urlDatabase[req.params.id];
+
+  res.redirect('/urls');
 });
 
 const generateRandomString = function() {
