@@ -23,17 +23,27 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.post('/urls', (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
+  const shortUrl = generateRandomString();
+  urlDatabase[shortUrl] = req.body.longURL;
+
+  res.redirect(`/u/${shortUrl}`);
 });
 
 // accept different route parameters
-app.get('/urls/:id', (req, res) => {
-  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id]
-  };
-  res.render('urls_show', templateVars);
+app.get('/u/:id', (req, res) => {
+  if (!urlDatabase[req.params.id]) {
+    res.statusCode = 404;
+    res.send("invalid short URL");
+  }
+
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
+
+  // const templateVars = {
+  //   id: req.params.id,
+  //   longURL: urlDatabase[req.params.id]
+  // };
+  // res.render('urls_show', templateVars);
 });
 
 const generateRandomString = function() {
@@ -42,7 +52,7 @@ const generateRandomString = function() {
   const length = 6;
 
   for (let i = 0; i < length; i++) {
-    const randomChar = chars.charAt(Math.floor(Math.random() * chars));
+    const randomChar = chars.charAt(Math.floor(Math.random() * chars.length));
     randomStr += randomChar;
   }
 
