@@ -80,12 +80,19 @@ app.post('/urls/:id/delete', (req, res) => {
   return res.redirect('/urls');
 });
 
-// set cookie from login button
+// login & set cookie
 app.post('/login', (req, res) => {
   // set cookie
   res.cookie('username', req.body.username);
 
-  res.redirect('/urls');
+  return res.redirect('/urls');
+});
+
+// logout & clear cookie
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+
+  return res.redirect('/urls');
 });
 
 
