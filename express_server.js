@@ -1,5 +1,7 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const app = express();
+app.use(cookieParser());
 const PORT = 8080;
 
 // use EJS as template engine
@@ -15,14 +17,19 @@ const urlDatabase = {
 
 // READ
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
 
   return res.render('urls_index', templateVars);
 });
 
 // CREATE page
 app.get('/urls/new', (req, res) => {
-  return res.render('urls_new');
+  const templateVars = { username: req.cookies["username"] };
+
+  return res.render('urls_new', templateVars);
 });
 
 // CREATE
@@ -50,7 +57,8 @@ app.get('/urls/:id', (req, res) => {
 
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id]
+    longURL: urlDatabase[req.params.id],
+    username: req.cookies["username"]
   };
   return res.render('urls_show', templateVars);
 });
@@ -72,7 +80,9 @@ app.post('/urls/:id/delete', (req, res) => {
   return res.redirect('/urls');
 });
 
+// set cookie from login button
 app.post('/login', (req, res) => {
+  // set cookie
   res.cookie('username', req.body.username);
 
   res.redirect('/urls');
