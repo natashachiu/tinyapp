@@ -72,19 +72,11 @@ app.post('/urls/:id/delete', (req, res) => {
   return res.redirect('/urls');
 });
 
-const generateRandomString = function() {
-  let randomStr = '';
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const length = 6;
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username);
 
-  for (let i = 0; i < length; i++) {
-    const randomChar = chars.charAt(Math.floor(Math.random() * chars.length));
-    randomStr += randomChar;
-  }
-
-  return randomStr;
-};
-
+  res.redirect('/urls');
+});
 
 
 app.get('/', (req, res) => {
@@ -102,3 +94,17 @@ app.get('/hello', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });
+
+
+const generateRandomString = function() {
+  let randomStr = '';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const length = 6;
+
+  for (let i = 0; i < length; i++) {
+    const randomChar = chars.charAt(Math.floor(Math.random() * chars.length));
+    randomStr += randomChar;
+  }
+
+  return randomStr;
+};
