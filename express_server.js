@@ -13,44 +13,63 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+// READ
 app.get('/urls', (req, res) => {
   const templateVars = { urls: urlDatabase };
-  res.render('urls_index', templateVars);
+
+  return res.render('urls_index', templateVars);
 });
 
+// CREATE page
 app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
+  return res.render('urls_new');
 });
 
+// CREATE
 app.post('/urls', (req, res) => {
   const shortUrl = generateRandomString();
   urlDatabase[shortUrl] = req.body.longURL;
 
-  res.redirect(`/u/${shortUrl}`);
+  return res.redirect(`/urls/${shortUrl}`);
 });
 
 // route parameters return an object
 app.get('/u/:id', (req, res) => {
-  if (!urlDatabase[req.params.id]) {
+  const longUrl = urlDatabase[req.params.id];
+
+  if (!longUrl) {
     res.statusCode = 404;
-    res.send("invalid short URL");
+    return res.send(`Cannot GET invalid short URL ${req.params.id}`);
   }
 
-  const longURL = urlDatabase[req.params.id];
-  res.redirect(longURL);
-
-  // const templateVars = {
-  //   id: req.params.id,
-  //   longURL: urlDatabase[req.params.id]
-  // };
-  // res.render('urls_show', templateVars);
+  return res.redirect(longUrl);
 });
 
-// it is a POST method as forms only support GET & POST
+// EDIT page
+app.get('/urls/:id', (req, res) => {
+
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id]
+  };
+  return res.render('urls_show', templateVars);
+});
+
+// EDIT
+app.post('/urls/:id', (req, res) => {
+
+  urlDatabase[req.params.id] = req.body.newUrl;
+
+  res.redirect('/urls');
+});
+
+
+// DELETE
+// (a POST method as forms only support GET & POST)
 app.post('/urls/:id/delete', (req, res) => {
   delete urlDatabase[req.params.id];
 
-  res.redirect('/urls');
+  return res.redirect('/urls');
 });
 
 const generateRandomString = function() {
@@ -68,15 +87,17 @@ const generateRandomString = function() {
 
 
 
-app.get('/', (request, response) => {
-  response.send('Hello!');
+app.get('/', (req, res) => {
+  res.send('Hello!');
 });
 app.get('/urls.json', (req, res) => {
+  // translate JS object to JSON to be browser-readable
   res.json(urlDatabase);
 });
 app.get('/hello', (req, res) => {
   res.send('<html><body>Hello <b>World</b> </body></html>\n');
 });
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
