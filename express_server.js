@@ -130,6 +130,15 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
+  console.log(getUserByEmail(email));
+
+  if (!email || !password) {
+    res.status(400).send('email or password is empty');
+  } else if (getUserByEmail(email)) {
+    console.log(getUserByEmail(email));
+    res.status(400).send(`${email} has already been registered`);
+  }
+
   const id = generateRandomString();
   users[id] = { id, email, password };
 
@@ -151,7 +160,7 @@ app.listen(PORT, () => {
 });
 
 
-const generateRandomString = function() {
+const generateRandomString = () => {
   let randomStr = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const length = 6;
@@ -162,4 +171,13 @@ const generateRandomString = function() {
   }
 
   return randomStr;
+};
+
+const getUserByEmail = (email) => {
+  for (const user in users) {
+    if (email === users[user].email) {
+      return user;
+    }
+  }
+  return null;
 };
