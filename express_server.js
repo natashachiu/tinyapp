@@ -13,8 +13,14 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  sgq3y6: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -42,25 +48,25 @@ app.get('/', (req, res) => {
 
 // READ
 app.get('/urls', (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send('Error: Must be logged in to display your URLs');
+  }
+
   const templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies.user_id),
     user: users[req.cookies.user_id]
   };
-
-  // if (!req.cookies.user_id) {
-  //   return res.redirect('/login');
-  // }
 
   return res.render('urls_index', templateVars);
 });
 
 // CREATE page
 app.get('/urls/new', (req, res) => {
-  const templateVars = { user: users[req.cookies.user_id] };
-
   if (!req.cookies.user_id) {
-    return res.redirect('/login');
+    return res.status(403).send('Error: Must be logged in to create new short URLs');
   }
+
+  const templateVars = { user: users[req.cookies.user_id] };
 
   return res.render('urls_new', templateVars);
 });
@@ -68,10 +74,15 @@ app.get('/urls/new', (req, res) => {
 // CREATE
 app.post('/urls', (req, res) => {
   if (!req.cookies.user_id) {
-    return res.status(403).send('Error: Must be logged in to shorten URLs');
+    return res.status(403).send('Error: Must be logged in to create new short URLs');
   }
+
   const shortUrl = generateRandomString();
-  urlDatabase[shortUrl] = req.body.longURL;
+
+  urlDatabase[shortUrl] = {
+    longURL: req.body.longURL,
+    userID: req.cookies.user_id
+  };
 
   return res.redirect(`/urls/${shortUrl}`);
 });
@@ -79,10 +90,10 @@ app.post('/urls', (req, res) => {
 // direct users from short URL to webpage
 // route parameters return an object
 app.get('/u/:id', (req, res) => {
-  const longUrl = urlDatabase[req.params.id];
+  const longUrl = urlDatabase[req.params.id].longURL;
 
   if (!longUrl) {
-    return res.status(404).send(`Error: Cannot retrieve URL from invalid short URL '${req.params.id}'`);
+    return res.status(404).send(`Error: Cannot retrieve webpage for invalid short URL '${req.params.id}'`);
   }
 
   return res.redirect(longUrl);
@@ -90,19 +101,38 @@ app.get('/u/:id', (req, res) => {
 
 // EDIT page
 app.get('/urls/:id', (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send('Error: Must be logged in to access individual URL pages');
+  }
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send(`Error: Cannot access URL page for invalid short URL '${req.params.id}'`);
+  }
+  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+    return res.status(403).send('Error: You may only access URL pages that belong to you');
+  }
 
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user: users[req.cookies.user_id]
   };
+
   return res.render('urls_show', templateVars);
 });
 
 // EDIT
 app.post('/urls/:id', (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send('Error: Must be logged in to edit URLs');
+  }
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send(`Error: Cannot edit URL for invalid short URL '${req.params.id}'`);
+  }
+  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+    return res.status(403).send('Error: You may only edit URLs that belong to you');
+  }
 
-  urlDatabase[req.params.id] = req.body.newUrl;
+  urlDatabase[req.params.id].longURL = req.body.newUrl;
 
   res.redirect('/urls');
 });
@@ -111,6 +141,16 @@ app.post('/urls/:id', (req, res) => {
 // DELETE
 // (a POST method as forms only support GET & POST)
 app.post('/urls/:id/delete', (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send('Error: Must be logged in to delete URLs');
+  }
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send(`Error: Cannot delete URL for invalid short URL '${req.params.id}'`);
+  }
+  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+    return res.status(403).send('Error: You may only delete URLs that belong to you');
+  }
+
   delete urlDatabase[req.params.id];
 
   return res.redirect('/urls');
@@ -142,6 +182,7 @@ app.post('/login', (req, res) => {
   if (password !== user.password) {
     return res.status(403).send(`Error: Incorrect password for '${email}'`);
   }
+
   res.cookie('user_id', user.id);
 
   return res.redirect('/urls');
@@ -155,13 +196,13 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  const templateVars = { user: users[req.cookies.user_id] };
-
   if (req.cookies.user_id) {
     return res.redirect('/urls');
   }
 
-  res.render('register', templateVars);
+  const templateVars = { user: users[req.cookies.user_id] };
+
+  return res.render('register', templateVars);
 });
 
 // register, add user to database & set cookie
@@ -216,4 +257,14 @@ const getUserByEmail = (email) => {
     }
   }
   return null;
+};
+
+const urlsForUser = (id) => {
+  const result = {};
+  for (const urlId in urlDatabase) {
+    if (id === urlDatabase[urlId].userID) {
+      result[urlId] = urlDatabase[urlId];
+    }
+  }
+  return result;
 };
