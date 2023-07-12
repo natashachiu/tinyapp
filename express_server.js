@@ -1,9 +1,11 @@
 const express = require('express');
+const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+
 const app = express();
+app.use(morgan('dev'));
 app.use(cookieParser());
 const PORT = 8080;
-
 // use EJS as template engine
 app.set('view engine', 'ejs');
 
@@ -15,11 +17,37 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  1: {
+    id: '1',
+    email: "jon@example.com",
+    password: "pass1",
+  },
+  2: {
+    id: '2',
+    email: "may@example.com",
+    password: "pass2",
+  },
+};
+
+
+app.get('/', (req, res) => {
+  const templateVars = { user: users[req.cookies.user_id] };
+
+  // if (templateVars.username) {
+  return res.redirect('/urls');
+  // } else {
+  //   return res.redirect('/login');
+  // }
+});
+
+// TODO: logged in home page
+
 // READ
 app.get('/urls', (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user: users[req.cookies.user_id]
   };
 
   return res.render('urls_index', templateVars);
@@ -27,7 +55,7 @@ app.get('/urls', (req, res) => {
 
 // CREATE page
 app.get('/urls/new', (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const templateVars = { user: users[req.cookies.user_id] };
 
   return res.render('urls_new', templateVars);
 });
@@ -40,6 +68,7 @@ app.post('/urls', (req, res) => {
   return res.redirect(`/urls/${shortUrl}`);
 });
 
+// direct users from short URL to webpage
 // route parameters return an object
 app.get('/u/:id', (req, res) => {
   const longUrl = urlDatabase[req.params.id];
@@ -58,7 +87,7 @@ app.get('/urls/:id', (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"]
+    user: users[req.cookies.user_id]
   };
   return res.render('urls_show', templateVars);
 });
@@ -95,16 +124,25 @@ app.post('/logout', (req, res) => {
   return res.redirect('/urls');
 });
 
-
-app.get('/', (req, res) => {
-  res.send('Hello!');
+app.get('/register', (req, res) => {
+  res.render('register');
 });
+
+app.post('/register', (req, res) => {
+  const { email, password } = req.body;
+  const id = generateRandomString();
+  users[id] = { id, email, password };
+
+  res.cookie('user_id', id);
+
+  console.log(users);
+  return res.redirect('/urls');
+});
+
+
 app.get('/urls.json', (req, res) => {
   // translate JS object to JSON to be browser-readable
   res.json(urlDatabase);
-});
-app.get('/hello', (req, res) => {
-  res.send('<html><body>Hello <b>World</b> </body></html>\n');
 });
 
 
