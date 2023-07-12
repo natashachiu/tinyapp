@@ -32,13 +32,8 @@ const users = {
 
 
 app.get('/', (req, res) => {
-  const templateVars = { user: users[req.cookies.user_id] };
 
-  // if (templateVars.username) {
   return res.redirect('/urls');
-  // } else {
-  //   return res.redirect('/login');
-  // }
 });
 
 // TODO: logged in home page
@@ -117,17 +112,30 @@ app.get('/login', (req, res) => {
 
 // login & set cookie
 app.post('/login', (req, res) => {
-  // set cookie
-  res.cookie('username', req.body.username);
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).send('email or password is empty');
+  }
+
+  const user = getUserByEmail(email);
+
+  if (!user) {
+    return res.status(403).send(`${email} is not registered with an account`);
+  }
+  if (password !== user.password) {
+    return res.status(403).send(`incorrect password for ${email}`);
+  }
+  res.cookie('user_id', user.id);
 
   return res.redirect('/urls');
 });
 
 // logout & clear cookie
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
 
-  return res.redirect('/urls');
+  return res.redirect('/login');
 });
 
 app.get('/register', (req, res) => {
@@ -136,14 +144,15 @@ app.get('/register', (req, res) => {
   res.render('register', templateVars);
 });
 
+// register, add user to database & set cookie
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
-  console.log(getUserByEmail(email));
 
   if (!email || !password) {
-    res.status(400).send('email or password is empty');
-  } else if (getUserByEmail(email)) {
-    res.status(400).send(`${email} is already registered with an account`);
+    return res.status(400).send('email or password is empty');
+  }
+  if (getUserByEmail(email)) {
+    return res.status(400).send(`${email} is already registered with an account`);
   }
 
   const id = generateRandomString();
@@ -183,7 +192,7 @@ const generateRandomString = () => {
 const getUserByEmail = (email) => {
   for (const user in users) {
     if (email === users[user].email) {
-      return user;
+      return users[user];
     }
   }
   return null;

@@ -14,16 +14,15 @@
 <body>
   <%- include('partials/_header') %>
     <main style="margin: 1em;">
-      <h3>Login to TinyApp</h3>
-      <form action="/login" method="POST" class="d-flex flex-column
-    align-items-center">
+      <h3>Login</h3>
+      <form action="/login" method="POST">
         <div class="form-group mb-4">
           <label for="email">Email</label>
-          <input type="email" class="form-control" name="email" style="width: 300px;" />
+          <input type="email" class="form-control" name="email" style="width: 300px;" placeholder="Enter email" />
         </div>
-        <div class="form-group mb-5">
+        <div class="form-group mb-4">
           <label for="password">Password</label>
-          <input type="password" class="form-control" name="password" style="width: 300px;" />
+          <input type="password" class="form-control" name="password" style="width: 300px;" placeholder="Password" />
         </div>
         <button class="btn btn-primary" type="submit">Login</button>
 
