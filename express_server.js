@@ -109,6 +109,12 @@ app.post('/urls/:id/delete', (req, res) => {
   return res.redirect('/urls');
 });
 
+app.get('/login', (req, res) => {
+  const templateVars = { user: users[req.cookies.user_id] };
+
+  return res.render('login', templateVars);
+});
+
 // login & set cookie
 app.post('/login', (req, res) => {
   // set cookie
@@ -125,7 +131,9 @@ app.post('/logout', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  res.render('register');
+  const templateVars = { user: users[req.cookies.user_id] };
+
+  res.render('register', templateVars);
 });
 
 app.post('/register', (req, res) => {
@@ -135,8 +143,7 @@ app.post('/register', (req, res) => {
   if (!email || !password) {
     res.status(400).send('email or password is empty');
   } else if (getUserByEmail(email)) {
-    console.log(getUserByEmail(email));
-    res.status(400).send(`${email} has already been registered`);
+    res.status(400).send(`${email} is already registered with an account`);
   }
 
   const id = generateRandomString();
@@ -144,7 +151,7 @@ app.post('/register', (req, res) => {
 
   res.cookie('user_id', id);
 
-  console.log(users);
+  // console.log(users);
   return res.redirect('/urls');
 });
 

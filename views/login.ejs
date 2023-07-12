@@ -8,14 +8,14 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous" />
 
-  <title>Registration - TinyApp</title>
+  <title>Login - TinyApp</title>
 </head>
 
 <body>
   <%- include('partials/_header') %>
     <main style="margin: 1em;">
-      <h3>Register for a TinyApp account</h3>
-      <form action="/register" method="POST" class="d-flex flex-column
+      <h3>Login to TinyApp</h3>
+      <form action="/login" method="POST" class="d-flex flex-column
     align-items-center">
         <div class="form-group mb-4">
           <label for="email">Email</label>
@@ -25,7 +25,7 @@
           <label for="password">Password</label>
           <input type="password" class="form-control" name="password" style="width: 300px;" />
         </div>
-        <button class="btn btn-primary" type="submit">Create account</button>
+        <button class="btn btn-primary" type="submit">Login</button>
 
 
 
