@@ -33,10 +33,12 @@ const users = {
 
 app.get('/', (req, res) => {
 
-  return res.redirect('/urls');
+  if (req.cookies.user_id) {
+    return res.redirect('/urls');
+  }
+  return res.redirect('/login');
 });
 
-// TODO: logged in home page
 
 // READ
 app.get('/urls', (req, res) => {
@@ -45,6 +47,10 @@ app.get('/urls', (req, res) => {
     user: users[req.cookies.user_id]
   };
 
+  // if (!req.cookies.user_id) {
+  //   return res.redirect('/login');
+  // }
+
   return res.render('urls_index', templateVars);
 });
 
@@ -52,11 +58,18 @@ app.get('/urls', (req, res) => {
 app.get('/urls/new', (req, res) => {
   const templateVars = { user: users[req.cookies.user_id] };
 
+  if (!req.cookies.user_id) {
+    return res.redirect('/login');
+  }
+
   return res.render('urls_new', templateVars);
 });
 
 // CREATE
 app.post('/urls', (req, res) => {
+  if (!req.cookies.user_id) {
+    return res.status(403).send('Error: Must be logged in to shorten URLs');
+  }
   const shortUrl = generateRandomString();
   urlDatabase[shortUrl] = req.body.longURL;
 
@@ -69,8 +82,7 @@ app.get('/u/:id', (req, res) => {
   const longUrl = urlDatabase[req.params.id];
 
   if (!longUrl) {
-    res.statusCode = 404;
-    return res.send(`Cannot GET invalid short URL ${req.params.id}`);
+    return res.status(404).send(`Error: Cannot retrieve URL from invalid short URL '${req.params.id}'`);
   }
 
   return res.redirect(longUrl);
@@ -107,6 +119,10 @@ app.post('/urls/:id/delete', (req, res) => {
 app.get('/login', (req, res) => {
   const templateVars = { user: users[req.cookies.user_id] };
 
+  if (req.cookies.user_id) {
+    return res.redirect('/urls');
+  }
+
   return res.render('login', templateVars);
 });
 
@@ -115,16 +131,16 @@ app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).send('email or password is empty');
+    return res.status(400).send('Error: Email or password is empty');
   }
 
   const user = getUserByEmail(email);
 
   if (!user) {
-    return res.status(403).send(`${email} is not registered with an account`);
+    return res.status(403).send(`Error: '${email}' is not registered with an account`);
   }
   if (password !== user.password) {
-    return res.status(403).send(`incorrect password for ${email}`);
+    return res.status(403).send(`Error: Incorrect password for '${email}'`);
   }
   res.cookie('user_id', user.id);
 
@@ -141,6 +157,10 @@ app.post('/logout', (req, res) => {
 app.get('/register', (req, res) => {
   const templateVars = { user: users[req.cookies.user_id] };
 
+  if (req.cookies.user_id) {
+    return res.redirect('/urls');
+  }
+
   res.render('register', templateVars);
 });
 
@@ -149,10 +169,10 @@ app.post('/register', (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).send('email or password is empty');
+    return res.status(400).send('Error: Email or password is empty');
   }
   if (getUserByEmail(email)) {
-    return res.status(400).send(`${email} is already registered with an account`);
+    return res.status(400).send(`Error: '${email}' is already registered with an account`);
   }
 
   const id = generateRandomString();
