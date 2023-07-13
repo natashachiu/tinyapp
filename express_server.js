@@ -22,16 +22,7 @@ app.set('view engine', 'ejs');
 // make POST request body human-readable
 app.use(express.urlencoded({ extended: true }));
 
-const urlDatabase = {
-  //   sgq3y6: {
-  //     longURL: "https://www.tsn.ca",
-  //     userID: "aJ48lW",
-  //   },
-  //   i3BoGr: {
-  //     longURL: "https://www.google.ca",
-  //     userID: "aJ48lW",
-  // },
-};
+const urlDatabase = {};
 
 const users = {
   1: {
@@ -91,7 +82,10 @@ app.post('/urls', (req, res) => {
 
   urlDatabase[shortUrl] = {
     longURL: req.body.longURL,
-    userID: req.session.userid
+    userID: req.session.userid,
+    urlVisits: 0,
+    uniqueUrlVisits: 0,
+    visitors: []
   };
 
   return res.redirect(`/urls/${shortUrl}`);
@@ -105,6 +99,30 @@ app.get('/u/:id', (req, res) => {
   if (!longUrl) {
     return res.status(404).send(`Error: Cannot retrieve webpage for invalid short URL '${req.params.id}'`);
   }
+  urlDatabase[req.params.id].urlVisits++;
+
+  // cookie to track distinct users
+  if (!req.session.visitorid) {
+    const visitorId = generateRandomString();
+    req.session.visitorid = visitorId;
+  }
+  // track number of unique visits
+  let uniqueVisit = false;
+  for (const visit of urlDatabase[req.params.id].visitors) {
+    if (req.session.visitorid === visit.id) {
+      uniqueVisit = true;
+    }
+  }
+  if (!uniqueVisit) {
+    urlDatabase[req.params.id].uniqueUrlVisits++;
+  }
+  // add visitor id and timestamp to visitors list
+  const date = new Date();
+  urlDatabase[req.params.id].visitors.push({
+    id: req.session.visitorid,
+    timestamp: date.toLocaleString()
+  });
+
 
   return res.redirect(longUrl);
 });
@@ -124,7 +142,10 @@ app.get('/urls/:id', (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
-    user: users[req.session.userid]
+    user: users[req.session.userid],
+    visits: urlDatabase[req.params.id].urlVisits,
+    uniqueVisits: urlDatabase[req.params.id].uniqueUrlVisits,
+    visitors: urlDatabase[req.params.id].visitors
   };
 
   return res.render('urls_show', templateVars);
@@ -198,7 +219,7 @@ app.post('/login', (req, res) => {
 
 // logout & clear cookie
 app.post('/logout', (req, res) => {
-  req.session = null;
+  req.session.userid = null;
 
   return res.redirect('/login');
 });
