@@ -1,6 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(morgan('dev'));
@@ -48,6 +49,7 @@ app.get('/', (req, res) => {
 
 // READ
 app.get('/urls', (req, res) => {
+  console.log(users);
   if (!req.cookies.user_id) {
     return res.status(403).send('Error: Must be logged in to display your URLs');
   }
@@ -175,11 +177,10 @@ app.post('/login', (req, res) => {
   }
 
   const user = getUserByEmail(email);
-
   if (!user) {
     return res.status(403).send(`Error: '${email}' is not registered with an account`);
   }
-  if (password !== user.password) {
+  if (!bcrypt.compareSync(password, user.password)) {
     return res.status(403).send(`Error: Incorrect password for '${email}'`);
   }
 
@@ -217,7 +218,8 @@ app.post('/register', (req, res) => {
   }
 
   const id = generateRandomString();
-  users[id] = { id, email, password };
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  users[id] = { id, email, password: hashedPassword };
 
   res.cookie('user_id', id);
 
@@ -229,6 +231,7 @@ app.post('/register', (req, res) => {
 app.get('/urls.json', (req, res) => {
   // translate JS object to JSON to be browser-readable
   res.json(urlDatabase);
+
 });
 
 
