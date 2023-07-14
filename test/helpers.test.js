@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const { getUserByEmail } = require('../helpers');
+const { getUserByEmail, urlsForUser } = require('../helpers');
 
 const testUsers = {
   "userRandomID": {
@@ -15,6 +15,17 @@ const testUsers = {
   }
 };
 
+const testUrls = {
+  "shortUrlID": {
+    longURL: "example.org",
+    userID: "userRandomID"
+  },
+  "shortUrl2ID": {
+    longURL: "google.com",
+    userID: "user2RandomID"
+  }
+};
+
 describe('#getUserByEmail', () => {
   it('should return a user with valid email', () => {
     const user = getUserByEmail('user@example.com', testUsers);
@@ -22,10 +33,30 @@ describe('#getUserByEmail', () => {
 
     assert.equal(expectedUserId, user.id);
   });
+
   it('should return undefined when provided with an invalid user email', () => {
     const user = getUserByEmail('test@example.com', testUsers);
 
-
     assert.equal(undefined, user);
+  });
+});
+
+describe('#urlsForUser', () => {
+  it('should return list of URL objects made by a given user when provided with a valid user ID', () => {
+    const userUrlDatabase = urlsForUser('userRandomID', testUrls);
+    const expectedResult = {
+      "shortUrlID": {
+        longURL: "example.org",
+        userID: "userRandomID"
+      }
+    };
+
+    assert.deepEqual(expectedResult, userUrlDatabase);
+  });
+
+  it('should return empty object when provided with an invalid user ID', () => {
+    const userUrlDatabase = urlsForUser('invalidUser', testUrls);
+
+    assert.deepEqual({}, userUrlDatabase);
   });
 });
