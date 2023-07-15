@@ -82,11 +82,11 @@ app.post('/urls', (req, res) => {
 
 // direct users from short URL to webpage
 app.get('/u/:id', (req, res) => {
-  const longUrl = urlDatabase[req.params.id].longURL;
-
-  if (!longUrl) {
+  if (!urlDatabase[req.params.id]) {
+    console.log('error');
     return res.status(404).send(invalidUrlErrMsg());
   }
+
   urlDatabase[req.params.id].urlVisits++;
 
   // cookie to track distinct users
@@ -111,6 +111,7 @@ app.get('/u/:id', (req, res) => {
     timestamp: date.toLocaleString()
   });
 
+  const longUrl = urlDatabase[req.params.id].longURL;
   return res.redirect(longUrl);
 });
 
